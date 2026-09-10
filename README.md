@@ -64,6 +64,14 @@ cd catlock-wayland
 chmod +x catlock.py catlock-wrapper.sh
 ```
 
+### Optional: Add to PATH (Recommended)
+You can link the wrapper to `~/.local/bin` so you can call `catlock` from anywhere:
+```bash
+mkdir -p ~/.local/bin
+ln -sf "$(pwd)/catlock-wrapper.sh" ~/.local/bin/catlock
+```
+*(Ensure `~/.local/bin` is in your `$PATH`)*
+
 ---
 
 ## ⌨️ Setting up the Shortcut in KDE Plasma
@@ -71,9 +79,8 @@ chmod +x catlock.py catlock-wrapper.sh
 1. Open **System Settings > Keyboard > Shortcuts**.
 2. Click **Add New > Command...**
 3. Set the name to **CatLock** and the command to:
-   ```bash
-   /path/to/catlock-wayland/catlock-wrapper.sh
-   ```
+   - If linked to PATH: `catlock`
+   - Or full path: `/path/to/catlock-wayland/catlock-wrapper.sh`
 4. Assign the global shortcut to **`Meta+Del`** (`Super + Del`).
 5. Click **Apply**.
 

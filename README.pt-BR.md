@@ -64,6 +64,14 @@ cd catlock-wayland
 chmod +x catlock.py catlock-wrapper.sh
 ```
 
+### Opcional: Adicionar ao PATH (Recomendado)
+Você pode criar um link do wrapper em `~/.local/bin` para conseguir executar `catlock` diretamente de qualquer pasta ou atalho:
+```bash
+mkdir -p ~/.local/bin
+ln -sf "$(pwd)/catlock-wrapper.sh" ~/.local/bin/catlock
+```
+*(Certifique-se de que `~/.local/bin` esteja no seu `$PATH`)*
+
 ---
 
 ## ⌨️ Configurando o Atalho no KDE Plasma
@@ -71,9 +79,8 @@ chmod +x catlock.py catlock-wrapper.sh
 1. Abra **Configurações do Sistema > Teclado > Atalhos**.
 2. Clique em **Adicionar novo > Comando...**
 3. Defina o nome como **CatLock** e o comando para:
-   ```bash
-   /caminho/para/catlock-wayland/catlock-wrapper.sh
-   ```
+   - Se adicionou ao PATH: `catlock`
+   - Ou o caminho completo: `/caminho/para/catlock-wayland/catlock-wrapper.sh`
 4. Defina o atalho global como **`Meta+Del`** (`Super + Del`).
 5. Clique em **Aplicar**.
 

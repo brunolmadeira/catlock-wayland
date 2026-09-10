@@ -1,6 +1,9 @@
 #!/bin/bash
 PID_FILE="/tmp/catlock.pid"
-SCRIPT_PATH="/home/brunolmadeira/Projetos/catlock/catlock.py"
+
+# Localiza o diretório deste script dinamicamente (compatível com qualquer caminho ou symlink)
+SCRIPT_DIR="$(dirname "$(realpath "$0" 2>/dev/null || readlink -f "$0" 2>/dev/null || echo "$(cd "$(dirname "$0")" && pwd)")")"
+SCRIPT_PATH="$SCRIPT_DIR/catlock.py"
 
 # Se já estiver rodando, encerra (toggle)
 if [ -f "$PID_FILE" ]; then
