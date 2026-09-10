@@ -6,6 +6,10 @@ Um bloqueador de teclado e mouse moderno, elegante e seguro para ambientes **Way
 
 Proteja seu computador contra gatos caminhando pelo teclado, crianças pequenas ou toques acidentais — mantendo sua tela totalmente visível (ideal para assistir vídeos, ler ou se afastar do PC temporariamente).
 
+<p align="center">
+  <img src="assets/catlock-pt.png" alt="Prévia do CatLock" width="560">
+</p>
+
 ---
 
 ## ✨ Recursos
@@ -19,6 +23,8 @@ Proteja seu computador contra gatos caminhando pelo teclado, crianças pequenas 
 - **🔒 Atalho Seguro de Desbloqueio:**
   - Desbloqueio exclusivo via **`Super + Del`** (ou **`Command + Del`**).
   - Como o `Super` (canto inferior esquerdo) e o `Del` (canto superior direito) ficam em extremidades opostas do teclado, é fisicamente impossível para um gato acionar o desbloqueio por acidente ao deitar no teclado.
+- **🎬 Modo Vídeo / Assistir (Minimizar sem Desproteger):**
+  - Pressione **`Super + Insert`** para ocultar o card e o escurecimento da tela. A tela fica 100% visível e desobstruída para assistir vídeos ou streams, mantendo todo o teclado e mouse bloqueados. Pressione **`Super + Insert`** novamente para restaurar o card.
 - **🌐 Bilíngue (Português / Inglês):**
   - Alterne o idioma instantaneamente clicando no botão `🌐` no card.
   - Salva sua preferência automaticamente em `~/.config/catlock/config.json`.
@@ -90,6 +96,7 @@ python3 catlock.py --lang en
 ### Durante o Bloqueio
 - **Clicar em qualquer lugar ou pressionar qualquer tecla:** A entrada é ignorada e a notificação de patinha `🐾` aparece.
 - **Trocar de Idioma:** Clique no botão `🌐` no card a qualquer momento para alternar entre Português e Inglês.
+- **Minimizar / Restaurar:** Pressione **`Super + Insert`** para ocultar o card e o escurecimento (ideal para vídeos) enquanto mantém tudo 100% bloqueado. Pressione novamente para reexibir.
 - **Desbloquear:** Pressione **`Super + Del`** (ou `Command + Del`).
 
 ---

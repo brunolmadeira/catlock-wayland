@@ -2,7 +2,9 @@
 """
 CatLock GUI - Bloqueador de Teclado e Mouse para Wayland / KDE Plasma
 Cria uma tela cheia elegante que captura todas as entradas do teclado e mouse.
-Atalho exclusivo para destravar: Super + Del (ou Command + Del)
+Atalhos:
+- Super + Del: Desbloquear e encerrar
+- Super + Insert: Minimizar / Restaurar tela (mantendo o bloqueio ativo)
 Suporta múltiplos idiomas: Português e Inglês (com alternância fácil).
 """
 
@@ -15,9 +17,9 @@ import argparse
 from pathlib import Path
 import dbus
 from PySide6.QtCore import Qt, QTimer, QEvent
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QPainter, QColor
 from PySide6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QFrame, QPushButton
 )
 
 PID_FILE = "/tmp/catlock.pid"
@@ -28,9 +30,12 @@ TRANSLATIONS = {
     "pt": {
         "status": "● PROTEÇÃO ATIVADA",
         "description": "O teclado e o mouse estão protegidos contra gatos e toques acidentais. Nenhum programa receberá comandos.",
-        "unlock_title": "Para desbloquear e voltar:",
-        "super_key": "Super / Command",
+        "commands_title": "Lista de comandos:",
+        "cmd_unlock": "Desbloquear:",
+        "cmd_minimize": "Minimizar / Restaurar:",
+        "super_key": "Super",
         "del_key": "Del",
+        "insert_key": "Insert",
         "feedback_blocked": "Entrada bloqueada",
         "feedback_mouse": "Clique do mouse bloqueado",
         "feedback_double_click": "Clique duplo bloqueado",
@@ -40,9 +45,12 @@ TRANSLATIONS = {
     "en": {
         "status": "● PROTECTION ACTIVE",
         "description": "Keyboard and mouse are protected against cats and accidental touches. No program will receive input.",
-        "unlock_title": "To unlock and return:",
-        "super_key": "Super / Command",
+        "commands_title": "Command list:",
+        "cmd_unlock": "Unlock:",
+        "cmd_minimize": "Minimize / Restore:",
+        "super_key": "Super",
         "del_key": "Del",
+        "insert_key": "Insert",
         "feedback_blocked": "Input blocked",
         "feedback_mouse": "Mouse click blocked",
         "feedback_double_click": "Double-click blocked",
@@ -104,6 +112,7 @@ class CatLockOverlay(QWidget):
         self.is_primary = is_primary
         self.lang = lang
         self.unlocked = False
+        self.is_minimized = False
         CatLockOverlay.all_instances.append(self)
 
         self.setWindowFlags(
@@ -122,49 +131,39 @@ class CatLockOverlay(QWidget):
         main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         if not self.is_primary:
-            # Tela secundária
-            bg_frame = QFrame(self)
-            bg_frame.setObjectName("secBgFrame")
-            bg_frame.setStyleSheet("""
-                QFrame#secBgFrame {
-                    background-color: rgba(13, 17, 23, 0.95);
-                    border: none;
+            # Tela secundária: card simples
+            self.sec_card = QFrame(self)
+            self.sec_card.setFixedWidth(460)
+            self.sec_card.setStyleSheet("""
+                QFrame {
+                    background-color: #161b22;
+                    border: 1px solid #30363d;
+                    border-radius: 20px;
+                    padding: 30px;
                 }
             """)
-            frame_layout = QVBoxLayout(bg_frame)
+            frame_layout = QVBoxLayout(self.sec_card)
             frame_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.sec_label = QLabel(TRANSLATIONS[self.lang]["sec_label"], bg_frame)
+            self.sec_label = QLabel(TRANSLATIONS[self.lang]["sec_label"], self.sec_card)
             self.sec_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.sec_label.setStyleSheet("font-size: 24px; color: #8b949e; font-weight: bold; border: none; background: transparent;")
+            self.sec_label.setStyleSheet("font-size: 20px; color: #8b949e; font-weight: bold; border: none; background: transparent;")
             frame_layout.addWidget(self.sec_label)
-            main_layout.addWidget(bg_frame)
+            main_layout.addWidget(self.sec_card)
             return
 
-        # Fundo escuro em tela cheia ocupando 100% da largura da tela
-        self.bg_frame = QFrame(self)
-        self.bg_frame.setObjectName("mainBgFrame")
-        self.bg_frame.setStyleSheet("""
-            QFrame#mainBgFrame {
-                background-color: rgba(13, 17, 23, 0.95);
-                border: none;
-            }
-        """)
-        bg_layout = QVBoxLayout(self.bg_frame)
-        bg_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # Card central com bordas arredondadas e largura original
-        card = QFrame(self.bg_frame)
-        card.setObjectName("centralCard")
-        card.setFixedWidth(560)
-        card.setStyleSheet("""
+        # Card central flutuante com bordas arredondadas
+        self.card = QFrame(self)
+        self.card.setObjectName("centralCard")
+        self.card.setFixedWidth(530)
+        self.card.setStyleSheet("""
             QFrame#centralCard {
                 background-color: #161b22;
                 border: 1px solid #30363d;
                 border-radius: 20px;
             }
         """)
-        card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(32, 24, 32, 28)
+        card_layout = QVBoxLayout(self.card)
+        card_layout.setContentsMargins(32, 22, 32, 26)
         card_layout.setSpacing(14)
         card_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -173,7 +172,7 @@ class CatLockOverlay(QWidget):
         top_bar.setContentsMargins(0, 0, 0, 0)
         top_bar.addStretch()
 
-        self.lang_btn = QPushButton(TRANSLATIONS[self.lang]["switch_lang_text"], card)
+        self.lang_btn = QPushButton(TRANSLATIONS[self.lang]["switch_lang_text"], self.card)
         self.lang_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.lang_btn.setStyleSheet("""
             QPushButton {
@@ -196,16 +195,16 @@ class CatLockOverlay(QWidget):
         card_layout.addLayout(top_bar)
 
         # Ícone do Gato
-        cat_icon = QLabel("🐱", card)
+        cat_icon = QLabel("🐱", self.card)
         cat_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        cat_icon.setStyleSheet("font-size: 70px; border: none; background: transparent;")
+        cat_icon.setStyleSheet("font-size: 66px; border: none; background: transparent;")
         card_layout.addWidget(cat_icon)
 
         # Título
-        title = QLabel("CatLock", card)
+        title = QLabel("CatLock", self.card)
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet("""
-            font-size: 32px;
+            font-size: 30px;
             font-weight: 800;
             color: #f0f6fc;
             border: none;
@@ -215,10 +214,10 @@ class CatLockOverlay(QWidget):
         card_layout.addWidget(title)
 
         # Badge de status
-        self.badge = QLabel(TRANSLATIONS[self.lang]["status"], card)
+        self.badge = QLabel(TRANSLATIONS[self.lang]["status"], self.card)
         self.badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.badge.setStyleSheet("""
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: 700;
             color: #3fb950;
             background-color: rgba(63, 185, 80, 0.12);
@@ -230,11 +229,11 @@ class CatLockOverlay(QWidget):
         card_layout.addWidget(self.badge)
 
         # Descrição
-        self.desc = QLabel(TRANSLATIONS[self.lang]["description"], card)
+        self.desc = QLabel(TRANSLATIONS[self.lang]["description"], self.card)
         self.desc.setWordWrap(True)
         self.desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.desc.setStyleSheet("""
-            font-size: 13.5px;
+            font-size: 13px;
             color: #8b949e;
             border: none;
             background: transparent;
@@ -243,60 +242,74 @@ class CatLockOverlay(QWidget):
         card_layout.addWidget(self.desc)
 
         # Divisor
-        divider = QFrame(card)
+        divider = QFrame(self.card)
         divider.setFrameShape(QFrame.Shape.HLine)
         divider.setStyleSheet("border-top: 1px solid #21262d; border-bottom: none; background: transparent;")
         card_layout.addWidget(divider)
 
-        # Instruções de desbloqueio
-        unlock_box = QFrame(card)
-        unlock_box.setStyleSheet("""
+        # Lista de comandos
+        commands_box = QFrame(self.card)
+        commands_box.setStyleSheet("""
             background-color: #0d1117;
             border: 1px solid #30363d;
             border-radius: 12px;
-            padding: 12px 16px;
         """)
-        unlock_layout = QVBoxLayout(unlock_box)
-        unlock_layout.setSpacing(6)
-        unlock_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.unlock_title = QLabel(TRANSLATIONS[self.lang]["unlock_title"], unlock_box)
-        self.unlock_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.unlock_title.setStyleSheet("font-size: 12px; color: #8b949e; border: none; background: transparent;")
-        unlock_layout.addWidget(self.unlock_title)
-
-        keys_row = QHBoxLayout()
-        keys_row.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        keys_row.setSpacing(10)
+        cmd_layout = QGridLayout(commands_box)
+        cmd_layout.setContentsMargins(16, 12, 16, 12)
+        cmd_layout.setHorizontalSpacing(10)
+        cmd_layout.setVerticalSpacing(10)
+        cmd_layout.setColumnStretch(0, 1)
 
         def make_key_tag(text):
-            lbl = QLabel(text, unlock_box)
+            lbl = QLabel(text, commands_box)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl.setMinimumWidth(64)
             lbl.setStyleSheet("""
                 background-color: #21262d;
                 color: #e6edf3;
                 border: 1px solid #484f58;
-                border-radius: 8px;
-                padding: 6px 14px;
-                font-size: 14px;
+                border-radius: 6px;
+                padding: 4px 8px;
+                font-size: 12.5px;
                 font-weight: bold;
             """)
             return lbl
 
-        self.super_tag = make_key_tag(TRANSLATIONS[self.lang]["super_key"])
-        keys_row.addWidget(self.super_tag)
+        def make_plus():
+            lbl = QLabel("+", commands_box)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl.setFixedWidth(16)
+            lbl.setStyleSheet("color: #8b949e; font-weight: bold; font-size: 14px; border: none; background: transparent;")
+            return lbl
 
-        plus = QLabel("+", unlock_box)
-        plus.setStyleSheet("color: #8b949e; font-weight: bold; font-size: 16px; border: none; background: transparent;")
-        keys_row.addWidget(plus)
-
+        # Linha 1: Desbloquear
+        self.unlock_label = QLabel(TRANSLATIONS[self.lang]["cmd_unlock"], commands_box)
+        self.unlock_label.setStyleSheet("font-size: 12.5px; color: #8b949e; border: none; background: transparent;")
+        self.super_tag1 = make_key_tag(TRANSLATIONS[self.lang]["super_key"])
+        plus1 = make_plus()
         self.del_tag = make_key_tag(TRANSLATIONS[self.lang]["del_key"])
-        keys_row.addWidget(self.del_tag)
 
-        unlock_layout.addLayout(keys_row)
-        card_layout.addWidget(unlock_box)
+        cmd_layout.addWidget(self.unlock_label, 0, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        cmd_layout.addWidget(self.super_tag1, 0, 1)
+        cmd_layout.addWidget(plus1, 0, 2)
+        cmd_layout.addWidget(self.del_tag, 0, 3)
+
+        # Linha 2: Minimizar / Restaurar
+        self.min_label = QLabel(TRANSLATIONS[self.lang]["cmd_minimize"], commands_box)
+        self.min_label.setStyleSheet("font-size: 12.5px; color: #8b949e; border: none; background: transparent;")
+        self.super_tag2 = make_key_tag(TRANSLATIONS[self.lang]["super_key"])
+        plus2 = make_plus()
+        self.insert_tag = make_key_tag(TRANSLATIONS[self.lang]["insert_key"])
+
+        cmd_layout.addWidget(self.min_label, 1, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        cmd_layout.addWidget(self.super_tag2, 1, 1)
+        cmd_layout.addWidget(plus2, 1, 2)
+        cmd_layout.addWidget(self.insert_tag, 1, 3)
+
+        card_layout.addWidget(commands_box)
 
         # Feedback interativo de pata
-        self.feedback_label = QLabel("", card)
+        self.feedback_label = QLabel("", self.card)
         self.feedback_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.feedback_label.setStyleSheet("""
             color: #a371f7;
@@ -307,13 +320,17 @@ class CatLockOverlay(QWidget):
             min-height: 20px;
         """)
         card_layout.addWidget(self.feedback_label)
-
-        bg_layout.addWidget(card)
-        main_layout.addWidget(self.bg_frame)
+        main_layout.addWidget(self.card)
 
         self.feedback_timer = QTimer(self)
         self.feedback_timer.setSingleShot(True)
         self.feedback_timer.timeout.connect(self.clear_feedback)
+
+    def paintEvent(self, event):
+        if not self.is_minimized:
+            painter = QPainter(self)
+            # Escurecimento suave e uniforme em 100% da tela (sem faixas de canto a canto)
+            painter.fillRect(self.rect(), QColor(0, 0, 0, 110))
 
     def on_lang_button_clicked(self):
         new_lang = "en" if self.lang == "pt" else "pt"
@@ -327,16 +344,32 @@ class CatLockOverlay(QWidget):
         if self.is_primary:
             self.badge.setText(t["status"])
             self.desc.setText(t["description"])
-            self.unlock_title.setText(t["unlock_title"])
-            self.super_tag.setText(t["super_key"])
+            self.unlock_label.setText(t["cmd_unlock"])
+            self.min_label.setText(t["cmd_minimize"])
+            self.super_tag1.setText(t["super_key"])
+            self.super_tag2.setText(t["super_key"])
             self.del_tag.setText(t["del_key"])
+            self.insert_tag.setText(t["insert_key"])
             self.lang_btn.setText(t["switch_lang_text"])
         else:
             if hasattr(self, "sec_label"):
                 self.sec_label.setText(t["sec_label"])
 
+    def toggle_minimize(self):
+        new_state = not self.is_minimized
+        for inst in CatLockOverlay.all_instances:
+            inst.set_minimized_view(new_state)
+
+    def set_minimized_view(self, minimized: bool):
+        self.is_minimized = minimized
+        if self.is_primary and hasattr(self, "card"):
+            self.card.setVisible(not minimized)
+        elif hasattr(self, "sec_card"):
+            self.sec_card.setVisible(not minimized)
+        self.update()
+
     def show_feedback(self, text):
-        if hasattr(self, "feedback_label"):
+        if not self.is_minimized and hasattr(self, "feedback_label"):
             self.feedback_label.setText(f"🐾 {text}")
             self.feedback_timer.start(1200)
 
@@ -355,23 +388,32 @@ class CatLockOverlay(QWidget):
             self.unlock_and_close()
             return
 
-        key_name = event.text().strip() or f"key {key}"
-        prefix = TRANSLATIONS[self.lang]["feedback_blocked"]
-        self.show_feedback(f"{prefix} ({key_name})")
+        # Atalho de minimizar / restaurar: Super + Insert
+        if is_meta and key == Qt.Key.Key_Insert:
+            print("[CatLock] Alternando minimizar/restaurar (Super + Insert)...")
+            self.toggle_minimize()
+            return
+
+        if not self.is_minimized:
+            key_name = event.text().strip() or f"key {key}"
+            prefix = TRANSLATIONS[self.lang]["feedback_blocked"]
+            self.show_feedback(f"{prefix} ({key_name})")
         event.accept()
 
     def keyReleaseEvent(self, event):
         event.accept()
 
     def mousePressEvent(self, event):
-        self.show_feedback(TRANSLATIONS[self.lang]["feedback_mouse"])
+        if not self.is_minimized:
+            self.show_feedback(TRANSLATIONS[self.lang]["feedback_mouse"])
         event.accept()
 
     def mouseReleaseEvent(self, event):
         event.accept()
 
     def mouseDoubleClickEvent(self, event):
-        self.show_feedback(TRANSLATIONS[self.lang]["feedback_double_click"])
+        if not self.is_minimized:
+            self.show_feedback(TRANSLATIONS[self.lang]["feedback_double_click"])
         event.accept()
 
     def wheelEvent(self, event):

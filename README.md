@@ -6,6 +6,10 @@ A modern, elegant, and secure keyboard and mouse locker for **Wayland** (and X11
 
 Protect your computer from curious cats walking across your keyboard, young children, or accidental touches—while keeping your screen completely visible (ideal for watching videos, reading, or stepping away).
 
+<p align="center">
+  <img src="assets/catlock-en.png" alt="CatLock Preview" width="560">
+</p>
+
 ---
 
 ## ✨ Features
@@ -19,6 +23,8 @@ Protect your computer from curious cats walking across your keyboard, young chil
 - **🔒 Secure Unlock Shortcut:**
   - Exclusively unlocked with **`Super + Del`** (or **`Command + Del`**).
   - Because `Super` (bottom-left) and `Del` (top-right) are on opposite diagonal corners of the keyboard, it is physically impossible for a cat lying or stepping on the keyboard to unlock it.
+- **🎬 Movie/Video Mode (Minimize & Protect):**
+  - Press **`Super + Insert`** to hide the card and dimming overlay. The screen becomes 100% visible for watching movies or streams while keyboard and mouse inputs remain completely blocked. Press **`Super + Insert`** again to restore the card.
 - **🌐 Bilingual (EN / PT-BR):**
   - Instant language switching with a single click on the `🌐 Language` button.
   - Remembers your language preference in `~/.config/catlock/config.json`.
@@ -90,6 +96,7 @@ python3 catlock.py --lang pt
 ### While Locked
 - **Click anywhere / press any key:** Input is ignored and an interactive `🐾` notification appears.
 - **Switch Language:** Click the `🌐` button on the card to switch between English and Portuguese anytime.
+- **Minimize / Restore:** Press **`Super + Insert`** to hide the card and dimming (ideal for videos) while retaining full input lock. Press again to restore.
 - **Unlock:** Press **`Super + Del`** (or `Command + Del`).
 
 ---
