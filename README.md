@@ -1,0 +1,108 @@
+# 🐱 CatLock for Wayland & Linux
+
+> **[Leia em Português](README.pt-BR.md)**
+
+A modern, elegant, and secure keyboard and mouse locker for **Wayland** (and X11) desktop environments, optimized for **KDE Plasma** on Linux.
+
+Protect your computer from curious cats walking across your keyboard, young children, or accidental touches—while keeping your screen completely visible (ideal for watching videos, reading, or stepping away).
+
+---
+
+## ✨ Features
+
+- **🐾 Full Input Protection:** Blocks and absorbs **all keyboard keystrokes and mouse clicks** (including left, right, double-click, and scroll wheel).
+- **🛡️ 100% Safe (No Root/Sudo):** Unlike kernel-level `evdev` grabbing, CatLock runs entirely in user-space using PySide6 (Qt6). It will never crash your compositor or leave modifier keys stuck in Wayland.
+- **🎨 Modern HUD Design:**
+  - Sleek dark overlay with **rounded screen corners** and subtle glowing borders.
+  - Responsive, compact central card with cat mascot and status indicator.
+  - **Interactive Paw Feedback:** Pressing any key or mouse button displays an animated paw alert (`🐾 Input blocked`) confirming that the event was safely intercepted.
+- **🔒 Secure Unlock Shortcut:**
+  - Exclusively unlocked with **`Super + Del`** (or **`Command + Del`**).
+  - Because `Super` (bottom-left) and `Del` (top-right) are on opposite diagonal corners of the keyboard, it is physically impossible for a cat lying or stepping on the keyboard to unlock it.
+- **🌐 Bilingual (EN / PT-BR):**
+  - Instant language switching with a single click on the `🌐 Language` button.
+  - Remembers your language preference in `~/.config/catlock/config.json`.
+  - Supports `--lang en` and `--lang pt` CLI options.
+- **🖥️ Wayland & KDE Plasma Native:**
+  - Uses D-Bus (`org.kde.KGlobalAccel.blockGlobalShortcuts`) to temporarily disable system hotkeys (like standalone `Super` or `Alt+Tab`) while locked.
+  - Automatically covers all connected monitors.
+
+---
+
+## 🚀 Installation & Requirements
+
+### Requirements
+- **Python 3.10+**
+- **PySide6** (Qt 6 for Python)
+- **python-dbus** (for KDE Plasma shortcut blocking)
+
+On Arch Linux / CachyOS:
+```bash
+sudo pacman -S python python-pyside6 python-dbus
+```
+
+On Fedora:
+```bash
+sudo dnf install python3 python3-pyside6 python3-dbus
+```
+
+On Ubuntu / Debian:
+```bash
+sudo apt install python3 python3-pyside6 python3-dbus
+```
+
+### Clone the Repository
+```bash
+git clone https://github.com/brunolmadeira/catlock-wayland.git
+cd catlock-wayland
+chmod +x catlock.py catlock-wrapper.sh
+```
+
+---
+
+## ⌨️ Setting up the Shortcut in KDE Plasma
+
+1. Open **System Settings > Keyboard > Shortcuts**.
+2. Click **Add New > Command...**
+3. Set the name to **CatLock** and the command to:
+   ```bash
+   /path/to/catlock-wayland/catlock-wrapper.sh
+   ```
+4. Assign the global shortcut to **`Meta+Del`** (`Super + Del`).
+5. Click **Apply**.
+
+Now, pressing **Super + Del** toggles CatLock on and off seamlessly!
+
+---
+
+## 🕹️ Usage
+
+### From Terminal or Shortcut
+```bash
+# Launch CatLock (or toggle off if already running)
+./catlock-wrapper.sh
+
+# Force specific language
+python3 catlock.py --lang en
+python3 catlock.py --lang pt
+```
+
+### While Locked
+- **Click anywhere / press any key:** Input is ignored and an interactive `🐾` notification appears.
+- **Switch Language:** Click the `🌐` button on the card to switch between English and Portuguese anytime.
+- **Unlock:** Press **`Super + Del`** (or `Command + Del`).
+
+---
+
+## 📜 Acknowledgements & References
+
+This project was inspired by and initially based on:
+- **[lottev1991/catlock-wayland](https://github.com/lottev1991/catlock-wayland)**: The original inspiration for a Wayland keyboard locker script. This version completely redesigned the architecture from low-level `evdev` grabbing with terminal popups into a safe, crash-proof PySide6 graphical overlay with mouse blocking, rounded screen borders, and bilingual support.
+- **[rafalcieslak/catlock](https://github.com/rafalcieslak/catlock)**: For X11 users.
+- **[sophice/ahk-keyboard-locker](https://github.com/sophice/ahk-keyboard-locker)**: For Windows users (AutoHotkey).
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE.md).
