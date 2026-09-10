@@ -118,7 +118,7 @@ class CatLockOverlay(QWidget):
 
     def init_ui(self):
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(18, 18, 18, 18)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         if not self.is_primary:
@@ -128,8 +128,7 @@ class CatLockOverlay(QWidget):
             bg_frame.setStyleSheet("""
                 QFrame#secBgFrame {
                     background-color: rgba(13, 17, 23, 0.95);
-                    border: 2px solid rgba(88, 166, 255, 0.25);
-                    border-radius: 28px;
+                    border: none;
                 }
             """)
             frame_layout = QVBoxLayout(bg_frame)
@@ -141,23 +140,22 @@ class CatLockOverlay(QWidget):
             main_layout.addWidget(bg_frame)
             return
 
-        # Fundo escuro com bordas arredondadas na tela inteira
+        # Fundo escuro em tela cheia ocupando 100% da largura da tela
         self.bg_frame = QFrame(self)
         self.bg_frame.setObjectName("mainBgFrame")
         self.bg_frame.setStyleSheet("""
             QFrame#mainBgFrame {
-                background-color: rgba(13, 17, 23, 0.96);
-                border: 2px solid rgba(88, 166, 255, 0.35);
-                border-radius: 28px;
+                background-color: rgba(13, 17, 23, 0.95);
+                border: none;
             }
         """)
         bg_layout = QVBoxLayout(self.bg_frame)
         bg_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Card central
+        # Card central com bordas arredondadas e largura original
         card = QFrame(self.bg_frame)
         card.setObjectName("centralCard")
-        card.setFixedWidth(490)
+        card.setFixedWidth(560)
         card.setStyleSheet("""
             QFrame#centralCard {
                 background-color: #161b22;
