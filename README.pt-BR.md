@@ -103,10 +103,9 @@ python3 catlock.py --lang en
 
 ## 📜 Créditos e Referências
 
-Este projeto foi inspirado e baseado inicialmente em:
-- **[lottev1991/catlock-wayland](https://github.com/lottev1991/catlock-wayland)**: Projeto de referência original para bloqueio de teclado no Wayland. Esta versão reformulou completamente a arquitetura, substituindo a captura de baixo nível via `evdev` com terminal aberto por uma interface gráfica segura em PySide6/Qt6 com bloqueio de mouse, bordas arredondadas e suporte multilíngue.
-- **[rafalcieslak/catlock](https://github.com/rafalcieslak/catlock)**: Para usuários do X11.
-- **[sophice/ahk-keyboard-locker](https://github.com/sophice/ahk-keyboard-locker)**: Para usuários do Windows (AutoHotkey).
+- **[lottev1991/catlock-wayland](https://github.com/lottev1991/catlock-wayland)**: **Principal inspiração** para a criação deste projeto. Enquanto o script original explorava o bloqueio de teclado no Wayland através de captura direta via `evdev` no terminal, este projeto reconstruiu a solução do zero em PySide6 (Qt6) para oferecer uma interface gráfica moderna, segura e à prova de travamentos, com bloqueio completo de mouse, suporte a múltiplos monitores, modo vídeo/apresentação e alternância bilíngue.
+- **[rafalcieslak/catlock](https://github.com/rafalcieslak/catlock)**: Consultado para fins de estudo e referência sobre mecanismos de bloqueio no X11.
+- **[sophice/ahk-keyboard-locker](https://github.com/sophice/ahk-keyboard-locker)**: Consultado para fins de estudo e referência sobre implementação em ambientes Windows com AutoHotkey.
 
 ---
 
